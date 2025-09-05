@@ -2266,6 +2266,14 @@ class TagsFilter extends HTMLElement {
       document.title = dom?.querySelector('title')?.innerText;
       const newSection = dom.querySelector(this.selectors.section);
       this.domNodes.section.replaceWith(newSection);
+      try {
+        const container = document.querySelector('[data-product-container]');
+        const root = container?.firstElementChild || container || document;
+        document.dispatchEvent(new CustomEvent('egross:filters:applied', { detail: { root } }));
+        if (window.ConceptSGMEvents && typeof window.ConceptSGMEvents.emit === 'function') {
+          try { window.ConceptSGMEvents.emit('ON_PRODUCT_LIST_UPDATED', { root }); } catch(e){}
+        }
+      } catch(e) {}
     });
 
     _defineProperty(this, "setLoadingTarget", () => {

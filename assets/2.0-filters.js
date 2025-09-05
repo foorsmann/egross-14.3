@@ -2789,6 +2789,14 @@ class CollectionFiltersForm extends HTMLElement {
     _defineProperty(this, "renderProductGrid", html => {
       const newSection = new DOMParser().parseFromString(html, 'text/html').querySelector('.facest-filters-section');
       this.domNodes.section.replaceWith(newSection);
+      try {
+        const container = document.querySelector('[data-product-container]');
+        const root = container?.firstElementChild || container || document;
+        document.dispatchEvent(new CustomEvent('egross:filters:applied', { detail: { root } }));
+        if (window.ConceptSGMEvents && typeof window.ConceptSGMEvents.emit === 'function') {
+          try { window.ConceptSGMEvents.emit('ON_PRODUCT_LIST_UPDATED', { root }); } catch(e){}
+        }
+      } catch(e) {}
     });
 
     _defineProperty(this, "scrollToTop", () => {

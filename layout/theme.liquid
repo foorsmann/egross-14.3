@@ -41,17 +41,14 @@ template-{{ template.name | handle }} {{ template.name }}-{{ template.suffix }} 
   {% render 'critical-scripts' %}
   {% render 'custom-code-head' %}
 
-  {%- comment -%} QG critical gate: elimină FOUC pe collection quick-add {%- endcomment -%}
+  {%- comment -%} QG critical gate — ascunde acțiunile din listing până la prima măsurare {%- endcomment -%}
   <style id="qg-critical">
-    /* Ascunde DOAR acțiunile din listing de colecții până la prima măsurare.
-       Folosim visibility:hidden ca să nu provoace layout shift. */
-    html[data-qg="init"] .sf__product-listing[data-product-container]:not([data-qg-ready])
-    .collection-form__actions { visibility: hidden; }
+    /* Ascunde DOAR în listingul de colecții NOI (după replace),
+       până când JS marchează containerul ca gata. */
+    .sf__product-listing[data-product-container]:not([data-qg-ready]) .collection-form__actions {
+      visibility: hidden; /* păstrează spațiul, zero layout-shift */
+    }
   </style>
-  <script>
-    // Setăm cât mai devreme posibil ca să prindem primul paint.
-    try { document.documentElement.setAttribute('data-qg','init'); } catch(e){}
-  </script>
 
   {{ 'theme.css' | asset_url | stylesheet_tag }}
   {{ 'chunk.css' | asset_url | stylesheet_tag }}

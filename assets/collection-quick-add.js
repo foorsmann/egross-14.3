@@ -4,17 +4,6 @@
  */
 (function(){
   var addToCartLocks = new WeakSet();
-  var qgFirstPaintDone = false;
-  function qgMarkListingReady(){
-    if(qgFirstPaintDone) return;
-    var listing = document.querySelector('.sf__product-listing[data-product-container]');
-    if(listing){
-      listing.setAttribute('data-qg-ready','1');
-    }
-    // Fallback global (dacă nu există containerul dintr-un motiv sau altul)
-    try { document.documentElement.removeAttribute('data-qg'); } catch(e){}
-    qgFirstPaintDone = true;
-  }
   function snapDown(val, step, min){
     if(!isFinite(val)) return min;
     if(val < min) return min;
@@ -228,9 +217,14 @@ function qgSyncSliderQtyUI(qtyEl, sendQty) {
       }
     });
   }
-  function applyMinQty(){
-    document.querySelectorAll('input[data-collection-min-qty]').forEach(function(input){
-      // SLIDER: folosim regula proprie si iesim
+  function applyMinQty(root){
+    var scope = (root && root.nodeType === 1) ? root : document;
+    var inputs = [];
+    if(scope.matches && scope.matches('input[data-collection-min-qty]')){
+      inputs.push(scope);
+    }
+    scope.querySelectorAll && scope.querySelectorAll('input[data-collection-min-qty]').forEach(function(inp){ inputs.push(inp); });
+    inputs.forEach(function(input){
       if (qgEnforceSliderInput(input)) return;
       var min = parseInt(input.getAttribute('data-collection-min-qty'),10);
       if(min && min > 0){
@@ -494,12 +488,19 @@ function qgSyncSliderQtyUI(qtyEl, sendQty) {
     }
   }
 
+  /* ROOT-AWARE + IDEMPOTENT */
   function setupCollectionDoubleQtyButtons(root){
-    var scope = root || document;
-    if(scope.matches && scope.matches('.collection-double-qty-btn')){
+    var scope = (root && root.nodeType === 1) ? root : document;
+    if (scope.matches && scope.matches('.collection-double-qty-btn')) {
+      if (scope.dataset.qbtnInit === '1') return;
       setupCollectionDoubleQtyButton(scope);
+      scope.dataset.qbtnInit = '1';
     }
-    scope.querySelectorAll && scope.querySelectorAll('.collection-double-qty-btn').forEach(setupCollectionDoubleQtyButton);
+    scope.querySelectorAll && scope.querySelectorAll('.collection-double-qty-btn').forEach(function(btn){
+      if (btn.dataset.qbtnInit === '1') return;
+      setupCollectionDoubleQtyButton(btn);
+      btn.dataset.qbtnInit = '1';
+    });
   }
 
   function updateCollectionDoubleQtyState(input){
@@ -718,8 +719,10 @@ async function handleDelegatedAddToCart(e){
     var btn = e.target.closest('.collection-double-qty-btn');
     if(btn) btn.classList.remove('focus');
   }
-  function updateQtyGroupLayout(){
-    document.querySelectorAll('.collection-qty-group').forEach(function(group){
+  /* ROOT-AWARE */
+  function updateQtyGroupLayout(root){
+    var scope = (root && root.nodeType === 1) ? root : document;
+    scope.querySelectorAll('.collection-qty-group').forEach(function(group){
       var input = group.querySelector('input[data-collection-quantity-input]');
       var btn = group.querySelector('.collection-double-qty-btn');
       var actions = group.closest('.collection-form__actions');
@@ -733,53 +736,95 @@ async function handleDelegatedAddToCart(e){
     });
   }
   var qtyLayoutListenerBound = false;
-  var qtyResizeObserver = window.ResizeObserver ? new ResizeObserver(updateQtyGroupLayout) : null;
-  function watchQtyGroupLayout(){
-    updateQtyGroupLayout();
-    qgMarkListingReady(); // <- marchează containerul ca ready imediat după prima măsurare
-    if(qtyLayoutListenerBound) return;
-    qtyLayoutListenerBound = true;
-    window.addEventListener('resize', updateQtyGroupLayout);
-    window.addEventListener('load', function(){ updateQtyGroupLayout(); qgMarkListingReady(); });
-    if(document.fonts && document.fonts.ready){
-      document.fonts.ready.then(function(){ updateQtyGroupLayout(); qgMarkListingReady(); });
+  var observedQtyGroups = new WeakSet();
+  var qtyResizeObserver = window.ResizeObserver ? new ResizeObserver(function(){ updateQtyGroupLayout(document); }) : null;
+
+  function observeQtyGroups(root){
+    if(!qtyResizeObserver) return;
+    var scope = (root && root.nodeType === 1) ? root : document;
+    scope.querySelectorAll('.collection-qty-group').forEach(function(g){
+      if(!observedQtyGroups.has(g)){
+        qtyResizeObserver.observe(g);
+        observedQtyGroups.add(g);
+      }
+    });
+  }
+
+  /* Mark container ready -> ridică anti-FOUC gate pe container */
+  function qgMarkListingReady(root){
+    var container = (root && root.closest && root.closest('[data-product-container]')) ||
+                    document.querySelector('[data-product-container]');
+    if (container && !container.hasAttribute('data-qg-ready')) {
+      container.setAttribute('data-qg-ready','1');
     }
+  }
+
+  /* Orchestrare scopată pe root NOU */
+  function reinitCollection(root){
+    var scope = (root && root.nodeType === 1) ? root : document;
+    applyMinQty(scope);
+    setupCollectionDoubleQtyButtons(scope);
+    // listeners globale rămân o singură dată; aici doar asigurăm UI/state
+    observeQtyGroups(scope);
+    updateQtyGroupLayout(scope);
+    qgMarkListingReady(scope);
+  }
+
+  /* (Re)leagă observer pe containerul corect, chiar dacă e înlocuit */
+  var productContainerObserver = null;
+  var observedProductContainer = null;
+  function bindProductContainerObserver(){
     var container = document.querySelector('[data-product-container]');
-    if(container && qtyResizeObserver){
-      container.querySelectorAll('.collection-qty-group').forEach(function(group){
-        qtyResizeObserver.observe(group);
-      });
-    }
-    if(container && window.MutationObserver){
-      var observer = new MutationObserver(function(mutations){
-        updateQtyGroupLayout();
-        qgMarkListingReady(); // în caz că primul paint se întâmplă după primul append
+    if(!container) return;
+    if(observedProductContainer === container) return;
+    if(productContainerObserver){ productContainerObserver.disconnect(); }
+    observedProductContainer = container;
+    observeQtyGroups(container);
+    updateQtyGroupLayout(container);
+    qgMarkListingReady(container);
+    if(window.MutationObserver){
+      productContainerObserver = new MutationObserver(function(mutations){
         mutations.forEach(function(m){
           m.addedNodes.forEach(function(node){
             if(!(node instanceof HTMLElement)) return;
-            var root = node;
-            setupCollectionDoubleQtyButtons(root);
-            var inputs = [];
-            if(root.matches && root.matches('input.collection-qty-element[data-collection-quantity-input]')){
-              inputs.push(root);
-            }
-            root.querySelectorAll && root.querySelectorAll('input.collection-qty-element[data-collection-quantity-input]').forEach(function(inp){
-              inputs.push(inp);
-            });
-            inputs.forEach(function(inp){
+            setupCollectionDoubleQtyButtons(node);
+            node.querySelectorAll && node.querySelectorAll('input.collection-qty-element[data-collection-quantity-input]').forEach(function(inp){
               if(qgIsSliderInput(inp)) qgEnforceSliderInput(inp);
             });
-            if(qtyResizeObserver){
-              var groups = [];
-              if(root.matches && root.matches('.collection-qty-group')) groups.push(root);
-              root.querySelectorAll && root.querySelectorAll('.collection-qty-group').forEach(function(g){ groups.push(g); });
-              groups.forEach(function(g){ qtyResizeObserver.observe(g); });
-            }
+            observeQtyGroups(node);
+            updateQtyGroupLayout(node);
           });
         });
       });
-      observer.observe(container, { childList:true, subtree:true });
+      productContainerObserver.observe(container, { childList:true, subtree:true });
     }
+  }
+
+  function watchQtyGroupLayout(){
+    updateQtyGroupLayout(document);
+    qgMarkListingReady(document);
+    if(qtyLayoutListenerBound) return;
+    qtyLayoutListenerBound = true;
+    window.addEventListener('resize', function(){ updateQtyGroupLayout(document); });
+    window.addEventListener('load', function(){ updateQtyGroupLayout(document); qgMarkListingReady(document); });
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(function(){ updateQtyGroupLayout(document); qgMarkListingReady(document); });
+    }
+    bindProductContainerObserver(); // prima legare
+
+    // Rebind + reinit pe evenimentele temei
+    var handleListUpdated = function(e){
+      bindProductContainerObserver();
+      var hinted = (e && e.detail && e.detail.root) ? e.detail.root : (observedProductContainer || document);
+      reinitCollection(hinted);
+    };
+    if (window.ConceptSGMEvents && typeof window.ConceptSGMEvents.on === 'function'){
+      window.ConceptSGMEvents.on('ON_PRODUCT_LIST_UPDATED', handleListUpdated);
+    } else {
+      document.addEventListener('ON_PRODUCT_LIST_UPDATED', handleListUpdated);
+    }
+    document.addEventListener('egross:filters:applied', handleListUpdated);
+    window.addEventListener('popstate', function(){ setTimeout(function(){ bindProductContainerObserver(); reinitCollection(document); }, 0); });
   }
   document.addEventListener('input', handleQtyInputEvent, true);
   document.addEventListener('change', handleQtyInputEvent, true);
@@ -791,14 +836,11 @@ async function handleDelegatedAddToCart(e){
   document.addEventListener('blur', handleDoubleQtyBlur, true);
 
   function initAll(){
-    applyMinQty();
-    setupCollectionDoubleQtyButtons();
+    applyMinQty(document);
+    setupCollectionDoubleQtyButtons(document);
     attachQtyButtonListeners();
     attachNoHighlightListeners();
     watchQtyGroupLayout();
-    // Dacă initAll rulează din alte evenimente (ex. shopify:section:load),
-    // asigură-te că marcăm ready după prima măsurare:
-    qgMarkListingReady();
   }
   document.addEventListener('DOMContentLoaded', initAll);
   window.addEventListener('shopify:section:load', initAll);
