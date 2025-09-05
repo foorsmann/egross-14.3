@@ -1,0 +1,249 @@
+
+.prod__option-label__quantity {
+  display: block;
+}
+
+.form__input-wrapper--select.flex-1 {
+  margin-bottom: 0 !important;
+}
+
+/* Hide empty product form errors */
+.prod__form-error:empty {
+  display: none;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.prod__form-error:not(:empty) {
+  display: block;
+}
+
+/* Sticky ATC error display */
+.sticky-atc-error {
+  position: fixed;
+  left: 50%;
+  width: 70%;
+  max-width: calc(var(--container-width, 1280) * 1px);
+  margin-left: 0;
+  margin-right: 0;
+  bottom: 90px;
+  padding: .5rem 1rem;
+  background: #ef4444;
+  color: #fff;
+  border: 1px solid #b91c1c;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px #0003;
+  transform: translate(-50%, -100%);
+  opacity: 0;
+  z-index: 60;
+  transition: transform .3s ease, opacity .3s ease;
+  pointer-events: auto;
+}
+.sticky-atc-error.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.sticky-atc-error:empty {
+  display: none;
+}
+.sticky-atc-error__msg {
+  display: block;
+}
+
+@media (max-width: 767px) {
+  .cart-item-line-total-mobile {
+    display: block;
+    margin-top: 4px;
+    color: #111;
+  }
+}
+@media (min-width: 768px) {
+  .cart-item-line-total-mobile {
+    display: none !important;
+  }
+}
+
+/* Collection product card error display */
+.collection-pcard-error {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 100%;
+  padding: .5rem 1rem;
+  background: #ef4444;
+  color: #fff;
+  border: 1px solid #b91c1c;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px #0003;
+  transform: translate(-50%, 100%);
+  opacity: 0;
+  z-index: 40;
+  transition: transform .3s ease, opacity .3s ease;
+  pointer-events: none;
+}
+.collection-pcard-error.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.collection-pcard-error:empty {
+  display: none;
+}
+.collection-pcard-error__msg {
+  display: block;
+}
+
+/* Search form custom styling */
+.sf-search-form {
+  height: 46px;
+}
+
+/* limit border styling to the search form */
+.sf-search-form.border {
+  border-width: 2px;
+}
+
+.sf-search-form.border-color-border {
+  border-color: #000000;
+}
+
+/* search popup form */
+[data-search-popup] form {
+  height: 50px;
+  border-width: 2px;
+}
+
+/* Global add-to-cart spinner state */
+.add-to-cart .atc-spinner { display: none; }
+.add-to-cart[aria-busy="true"] .atc-spinner { display: flex; }
+.add-to-cart[aria-busy="true"] .atc-text { visibility: hidden; }
+.add-to-cart[aria-busy="true"] { pointer-events: none; }
+
+.prod__sticky-atc .sf__btn.add-to-cart {
+  min-width: auto; /* or 0 to fully reset */
+}
+
+.social-media-links svg {
+  height: 1em;
+  width: auto;
+  vertical-align: baseline;
+}
+/* === Social media links: aliniere text + icon === */
+.social-media-links {
+  --sm-gap: 0.375rem;        /* ~6px, ajusteaza daca e nevoie */
+  --sm-color: #fff;          /* culoare implicita pe topbar */
+}
+
+.social-media-links .social-link {
+  display: inline-flex;       /* inlocuieste layoutul inline cu flex pentru aliniere stabila */
+  align-items: center;        /* centreaza vertical text + svg */
+  gap: var(--sm-gap);         /* spatiu intre label si icon */
+  line-height: 1;             /* elimina artefactele de baseline */
+  color: var(--sm-color);     /* permite control prin currentColor */
+}
+
+.social-media-links .social-label {
+  display: inline-flex;       /* aliniere verticala cu iconul */
+  align-items: center;
+  line-height: 1;             /* mentine inaltimea calculata strict din font-size */
+}
+
+.social-media-links .social-icon {
+  display: block;             /* elimina baseline-gap de la inline elements */
+  height: 1em;                /* EXACT inaltimea fontului curent => se potriveste cu textul */
+  width: 1em;                 /* patrat; daca vrei proportional, poti pune `auto`, dar patratul arata cel mai curat langa text */
+  flex: 0 0 1em;              /* rezerva fix spatiul iconului in linie */
+}
+
+@media (min-width: 768px) {
+  /* pastreaza comportamentul existent de centrare pe md daca e cazul */
+  .social-media-links.md\:justify-center {
+    justify-content: center;
+  }
+}
+
+/* Optional: efecte hover/focus discrete, fara sa afecteze layoutul */
+.social-media-links .social-link:focus-visible {
+  outline: 2px solid rgba(255,255,255,.6);
+  outline-offset: 2px;
+}
+.social-media-links .social-link:hover .social-icon {
+  transform: translateY(-0.5px);
+  transition: transform 120ms ease;
+}
+
+/* Reduce gap between social label and icon */
+.social-media-links {
+  --sm-gap: 0.1875rem;        /* ~3px */
+}
+
+.social-media-links .social-label {
+  padding-right: 0.25rem;     /* half the original 0.5rem */
+}
+
+/* Topbar divider between phone and social links */
+.topbar-divider {
+  display: inline-block;
+  width: 2px !important;
+  height: 1em;
+  background-color: rgba(255,255,255,0.4);
+  margin: 0 0.5rem;
+  vertical-align: middle;
+}
+
+.sf__topbar-inner .topbar-divider {
+  align-self: center;
+}
+
+@media (max-width: 639px) {
+  .topbar-divider {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* keep header search visible when mega menu opens via click */
+  .sf-header .sf-search-form {
+    flex-shrink: 0;
+    min-width: var(--search-min, 260px);
+    position: relative;
+    /* Ensure search bar stays above mega menu */
+    z-index: 1100;
+  }
+  .sf-header.mega-open {
+    overflow: visible;
+  }
+  .sf-header.mega-open .sf-search-form {
+    opacity: 1;
+    visibility: visible;
+    width: auto;
+  }
+  .sf-header:not(.mega-open).sf-mega-active .sf-search-form {
+    flex: 0 0 auto;
+    width: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Rounded bottom corners on scrollable Categorii mega menu panel */
+  .sf-header .sf-menu-item-parent[data-mega="categorii"] .sf-menu-submenu__content {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Rotate arrow for "Categorii" only when menu is open */
+  .sf-menu-item-parent[data-mega="categorii"] .sf-menu__arrow {
+    transition: transform 0.3s ease;
+    transform: rotate(0deg);
+  }
+
+  .sf-menu-item-parent[data-mega="categorii"]:hover .sf-menu__arrow {
+    transform: rotate(0deg) !important;
+  }
+
+  .sf-menu-item-parent[data-mega="categorii"].sf-menu-item--active .sf-menu__arrow {
+    transform: rotate(180deg) !important;
+  }
+}
+

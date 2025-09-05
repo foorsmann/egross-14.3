@@ -1,0 +1,121 @@
+{%- capture body_classes -%}
+template-{{ template.name | handle }} {{ template.name }}-{{ template.suffix }} {{ template.name | append: '-' | append: handle }} {% if cart.item_count == 0 %}cart-empty{% endif %}
+{%- endcapture -%}
+
+{% liquid
+  assign enable_rtl = settings.enable_rtl
+  assign language_support_rtl = settings.language_support_rtl
+  if enable_rtl and language_support_rtl != blank
+    assign shop_locale = localization.language.iso_code
+    assign language_support_rtl_list = language_support_rtl | split: ','
+    assign is_rtl = language_support_rtl_list | where: shop_locale
+    if is_rtl.size > 0
+      assign enable_rtl = true
+    else
+      assign enable_rtl = false
+    endif
+  endif
+%}
+<!doctype html>
+<html
+  class="no-js supports-no-cookies"
+  lang="{{ request.locale.iso_code }}"
+  data-template="{{ template.name }}"
+  {% if enable_rtl %}dir="rtl"{% endif %}
+>
+    {% render 'xconnector-key' %}
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0">
+  <meta name="theme-color" content="{{ settings.color_primary }}">
+
+  {%- liquid
+    render 'preload'
+    render 'SEO'
+    render 'social-meta-tags'
+    render 'font-face'
+  -%}
+
+  {% render 'critical-css' %}
+  {% render 'critical-scripts' %}
+  {% render 'custom-code-head' %}
+
+  {%- comment -%} QG critical gate: elimină FOUC pe collection quick-add {%- endcomment -%}
+  <style id="qg-critical">
+    /* Ascunde DOAR acțiunile din listing de colecții până la prima măsurare.
+       Folosim visibility:hidden ca să nu provoace layout shift. */
+    html[data-qg="init"] .sf__product-listing[data-product-container]:not([data-qg-ready])
+    .collection-form__actions { visibility: hidden; }
+  </style>
+  <script>
+    // Setăm cât mai devreme posibil ca să prindem primul paint.
+    try { document.documentElement.setAttribute('data-qg','init'); } catch(e){}
+  </script>
+
+  {{ 'theme.css' | asset_url | stylesheet_tag }}
+  {{ 'chunk.css' | asset_url | stylesheet_tag }}
+
+  {% render 'style-tags' %}
+
+  <script src="{{ 'theme-global.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'product-form.min.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'lazy-image.min.js' | asset_url }}" defer="defer"></script>
+
+  {{ content_for_header }}
+
+ {% render "reviews-importer-variable-js" %}
+{% capture boostersnippet %}{% include "booster-apps-common" %}{% endcapture %}{% unless boostersnippet contains "Liquid error" %}{{ boostersnippet }}{% endunless %}
+</head>
+
+  {%- comment -%}
+  Import stiluri pentru butonul "Dublează" cantitate
+  {%- endcomment -%}
+  <link href="{{ 'double-qty.css' | asset_url }}" rel="stylesheet" type="text/css" />
+
+  <!-- Buton Dublează cantitate -->
+  <script src="{{ 'double-qty.js' | asset_url }}" defer="defer"></script>
+
+  <!-- Componente quick add colecție -->
+  <link href="{{ 'collection-quick-add.css' | asset_url }}" rel="stylesheet" type="text/css" />
+  <script src="{{ 'collection-pcard-error.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'collection-quick-add.js' | asset_url }}" defer="defer"></script>
+
+<body
+  id="sf-theme"
+  class="{{ body_classes }} relative min-h-screen{% if customer %} customer-logged-in{% endif %}"
+  {% if template.name == 'product' %}data-product-id="{{ product.id }}"{% endif %}
+>
+  {% render 'theme-data' %}
+  {% section 'annoucement' %}
+  {% section 'header' %}
+  {% render 'scroll-top-button' %}
+
+  <main role="main" id="MainContent">
+    {{ content_for_layout }}
+    <div id="cart-drawer-container"></div>
+  </main>
+
+  {%- liquid
+    section 'footer'
+  -%}
+
+  {% section 'mobile-sticky-bar' %}
+
+  {% render 'custom-code-body' %}
+  {% render 'foxkit-messenger' %}
+  {% render 'script-tags' %}
+
+<script src="{{ 'app.js' | asset_url }}" defer="defer"></script>
+{{ 'slider-qty-fix.js' | asset_url | script_tag }}
+<script src="{{ 'foxkit-app.min.js' | asset_url }}" defer="defer"></script>
+
+
+  <script src="{{ 'quick-view.min.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'product-card-swatch.min.js' | asset_url }}" defer="defer"></script>
+
+
+ {% render "reviews-importer-popup" %}
+ {% render 'footer-main-script' %}
+</body>
+</html>

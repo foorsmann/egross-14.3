@@ -1,0 +1,126 @@
+{% comment %}
+  Renders a product form
+
+  Accepts:
+  - section_id: {String} Identifier of the section (required)
+  - product: {Object} Product Liquid object (required)
+  - current_variant: {String} Current (required)
+  - enable_dynamic_checkout: {Boolean} Show the dynamic checkout button (optional)
+  - show_quantity_selector: {Boolean} Show the quantity selector (optional)
+  - show_instant_quantity: {Boolean} Show instant quantity buttons after submitting the form (optional)
+{% endcomment %}
+
+{%- liquid 
+  if product.available 
+    assign variant_id = product.first_available_variant.id
+  else 
+    assign variant_id = product.selected_or_first_available_variant.id
+  endif
+  assign selected_variant_id = ''
+  if section.settings.change_product_variant_on_fitlering
+    assign variant_id = product.selected_or_first_available_variant.id
+    assign selected_variant_id = product.selected_variant.id
+  endif
+
+  if enableCardButton == nil
+    assign enableCardButton = true
+  endif
+
+  if show_double_qty_btn == nil
+    assign show_double_qty_btn = section.settings.show_double_qty_btn | default: false
+  endif
+  assign min_qty = product.metafields.custom.minimum_quantity | default: 1 | plus: 0
+  assign inventory_qty = product.selected_or_first_available_variant.inventory_quantity | default: 0 | plus: 0
+  assign has_double_qty_btn = false
+  if show_double_qty_btn
+    if min_qty > 0 and inventory_qty > 0 or request.design_mode
+      assign has_double_qty_btn = true
+    endif
+  endif
+-%}
+
+<div class="form__error-message-wrapper hidden" data-error-message-wrapper role="alert">
+  <span class="hidden">{{ 'general.accessibility.error' | t }} </span>
+  <span
+    class="form__error-message"
+    data-error-message
+  >
+    {{- 'products.product.quantity_minimum_message' | t -}}
+  </span>
+</div>
+{%- unless product.has_only_default_variant -%}
+  <div class="product-options">
+    {% render 'product-option', product: product, update_browser_history: false, product_form_id: product_form_id %}
+  </div>
+{%- endunless -%}
+
+<div class="product-form__actions" data-cart-actions>
+  <div class="flex flex-wrap items-end">
+    <product-form class="f-product-form product-form form w-full">
+      {%-
+        form 'product', product,
+        id: product_form_id,
+        class: product_form_class,
+        novalidate: 'novalidate',
+        data-type: 'add-to-cart-form', data-product-id: product.id,
+        data-product-handle: product.handle,
+        data-preorder: is_preorder,
+        data-dynamic-checkout: enable_dynamic_checkout
+      -%}
+        <input type="hidden" name="id" value="{{ variant_id }}" data-selected-variant="{{ selected_variant_id }}" disabled>
+        <div class="product-form__actions" data-cart-actions>
+          {% if show_quantity_selector == true %}
+            <label for="{{ product_form_id }}-qty" class="prod__option-label prod__option-label__quantity font-medium">
+              {{ 'products.product.quantity' | t }}
+            </label>
+          {% endif %}
+
+          <div class="flex flex-wrap items-end{% unless has_double_qty_btn %} gap-2{% endunless %}">
+            {% if show_quantity_selector == true %}
+              <div class="form__input-wrapper form__input-wrapper--select{% if has_double_qty_btn %} mr-5 w-32{% else %} flex-1{% endif %}" data-quantity-input-wrapper>
+                {% render 'product-qty-input', product_form_id: product_form_id, show_double_qty_btn: show_double_qty_btn %}
+              </div>
+            {% endif %}
+            {% if enableCardButton %}
+              {% liquid
+                assign btn_class = 'sf__btn-primary'
+                if enable_dynamic_checkout
+                  assign btn_class = 'sf__btn-secondary'
+                endif
+                assign atc_class = btn_class
+                unless has_double_qty_btn
+                  assign atc_class = atc_class | append: ' flex-1'
+                endunless
+              %}
+              {% render 'product-atc', class: atc_class, product: product %}
+              {% if section.settings.show_atwl and section.settings.layout == 'layout-7' %}
+                <div class="ml-2 hidden md:block">
+                  {% render 'tooltip', type: 'wishlist', class_name: 'sf__tooltip-top' %}
+                </div>
+              {% endif %}
+            {% endif %}
+            {% liquid
+              assign show_terms = false
+              if settings.agree_text != blank and settings.show_agree_on_product
+                render 'agree-terms-checkbox'
+                assign show_terms = true
+              endif
+            %}
+            {% if enable_dynamic_checkout and is_preorder == false %}
+              <div
+                class="prod__dynamic_checkout buy-one-click{% if section.settings.show_atc_button %} w-full mt-5{% else %} flex-1{% endif %}"
+                {% if show_terms %}
+                  data-terms-action disabled
+                {% endif %}
+              >
+                {{ form | payment_button }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="prod__form-error pt-4"></div>
+      {%- endform -%}
+    </product-form>
+  </div>
+</div>
+

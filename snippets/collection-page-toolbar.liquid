@@ -1,0 +1,49 @@
+{%- assign st = section.settings -%}
+
+{%- liquid 
+  assign sort_by = results.sort_by | default: results.default_sort_by
+  for option in results.sort_options
+    if option.value == sort_by
+      assign sort_by_name = option.name | escape
+      break
+    endif
+  endfor
+-%}
+<div class="sf__collection-toolbar">
+  <div class="sf__toolbar-wrapper">
+    <div class="sf__toggle-filter flex {% unless st.sidebar == 'fixed' %}xl:hidden{% endunless %}">
+      {%- if st.show_filter -%}
+        <button class="sf__sidebar-open {% unless st.show_filter %}hidden{% else %}flex items-center font-medium mr-4 md:mr-8{% endunless %}">
+            <span class="mr-2">{{ 'collections.toolbar.show_filter' | t }}</span>
+            <svg class="w-[12px] h-[12px]" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M441.9 167.3l-19.8-19.8c-4.7-4.7-12.3-4.7-17 0L224 328.2 42.9 147.5c-4.7-4.7-12.3-4.7-17 0L6.1 167.3c-4.7 4.7-4.7 12.3 0 17l209.4 209.4c4.7 4.7 12.3 4.7 17 0l209.4-209.4c4.7-4.7 4.7-12.3 0-17z"/></svg>
+        </button>
+      {%- endif -%}
+      {% if st.show_sorting %}
+        <button class="sf__sortmb-icon md:hidden flex items-center font-medium">
+          <span data-sortby-option>{{ sort_by_name }}</span>
+          <svg class="ml-2 w-[12px] h-[12px]" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M441.9 167.3l-19.8-19.8c-4.7-4.7-12.3-4.7-17 0L224 328.2 42.9 147.5c-4.7-4.7-12.3-4.7-17 0L6.1 167.3c-4.7 4.7-4.7 12.3 0 17l209.4 209.4c4.7 4.7 12.3 4.7 17 0l209.4-209.4c4.7-4.7 4.7-12.3 0-17z"/></svg>
+        </button>
+      {% endif %}
+    </div>
+      {%- if st.show_sorting -%}
+        <div class="flex flex-1 items-center justify-end">
+          <div class="font-medium hidden md:block" data-toolbar-sorting>
+            <div class="sf__custom-select">
+              {%- assign sort_by = results.sort_by | default: results.default_sort_by -%}
+              <select name="sort_by" aria-describedby="a11y-refresh-page-message">
+                {%- for option in results.sort_options -%}
+                  <option
+                    value="{{ option.value | escape }}"
+                    {% if option.value == sort_by %} selected="selected"{% endif %}
+                    data-index="{{ forloop.index0 }}"
+                  >
+                    {{ option.name | escape }}
+                  </option>
+                {%- endfor -%}
+              </select>
+            </div>
+          </div>
+        </div>
+      {%- endif -%}
+  </div>
+</div>

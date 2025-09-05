@@ -1,0 +1,69 @@
+{%- liquid
+  if product.available
+    assign variant_id = product.first_available_variant.id
+  else
+    assign variant_id = product.selected_or_first_available_variant.id
+  endif
+  assign selected_variant_id = ''
+  if section.settings.change_product_variant_on_fitlering
+    assign variant_id = product.selected_or_first_available_variant.id
+    assign selected_variant_id = product.selected_variant.id
+  endif
+  assign form_id = 'collection-form-' | append: section.id | append: '-' | append: product.id
+  assign min_qty = product.metafields.custom.minimum_quantity | default: 1 | plus: 0
+  assign max_qty = product.selected_or_first_available_variant.inventory_quantity
+  assign label_template = settings.double_qty_btn_label | default: 'Adauga inca {min_qty}'
+  if label_template contains '{min_qty}'
+    assign double_label = label_template | replace: '{min_qty}', min_qty
+  else
+    assign double_label = label_template
+  endif
+-%}
+{%- if settings.show_cart_button -%}
+  <div class="sf__pcard-quick-add-col w-full">
+    {%- if product.has_only_default_variant -%}
+      <collection-product-form class="collection-product-form w-full" data-collection-product-id="{{ product.id }}">
+        {%- form 'product', product,
+          id: form_id,
+          class: 'collection-product-card-form',
+          novalidate: 'novalidate'
+        -%}
+          <input type="hidden" name="id" value="{{ variant_id }}" data-collection-selected-variant="{{ selected_variant_id }}">
+          <div class="collection-form__actions" data-collection-cart-actions>
+            <div class="collection-qty-wrapper form__input-wrapper form__input-wrapper--select w-full" data-collection-quantity-input-wrapper>
+              <div class="collection-qty-group flex gap-2 w-full">
+                <collection-quantity-input class="collection-quantity-input h-[46px] flex border border-color-border rounded flex-1" data-collection-product-id="{{ product.id }}">
+                  <button class="collection-qty-button flex items-center justify-center h-[46px] w-[46px]" type="button" aria-label="{{ 'products.product.decrease_quantity' | t: title: product.title }}" data-collection-quantity-selector="decrease" data-collection-product-id="{{ product.id }}" name="minus" disabled>
+                    <svg class="w-[12px] h-[12px]" fill="currentColor" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M376 232H8c-4.42 0-8 3.58-8 8v32c0 4.42 3.58 8 8 8h368c4.42 0 8-3.58 8-8v-32c0-4.42-3.58-8-8-8z"/></svg>
+                  </button>
+                  <input class="collection-qty-element w-10 text-center flex-grow shrink appearance-none" type="number" name="quantity" id="{{ form_id }}-qty" value="{{ min_qty }}" min="1" max="{{ max_qty }}" step="{{ min_qty }}" aria-label="{{ 'products.product.product_quantity' | t }}" data-collection-quantity-input data-collection-min-qty="{{ min_qty }}" data-collection-product-id="{{ product.id }}" form="{{ form_id }}">
+                  <button class="collection-qty-button flex items-center justify-center h-[46px] w-[46px]" type="button" aria-label="{{ 'products.product.increase_quantity' | t: title: product.title }}" data-collection-quantity-selector="increase" data-collection-product-id="{{ product.id }}" name="plus">
+                    <svg class="w-[12px] h-[12px]" fill="currentColor" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M376 232H216V72c0-4.42-3.58-8-8-8h-32c-4.42 0-8 3.58-8 8v160H8c-4.42 0-8 3.58-8 8v32c0 4.42 3.58 8 8 8h160v160c0 4.42 3.58 8 8 8h32c4.42 0 8-3.58 8-8V280h160c4.42 0 8-3.58 8-8v-32c0-4.42-3.58-8-8-8z"/></svg>
+                  </button>
+                </collection-quantity-input>
+                {%- if min_qty > 0 or request.design_mode -%}
+                  <button type="button" class="collection-double-qty-btn double-qty-btn sf__btn sf__btn-secondary flex-1 max-w-[160px] h-[46px]" aria-label="{{ double_label }}" data-collection-double-qty data-collection-label-template="{{ label_template }}" data-collection-original-min-qty="{{ min_qty }}" data-collection-product-id="{{ product.id }}">{{ double_label }}</button>
+                {%- endif -%}
+              </div>
+            </div>
+            {% render 'product-atc', class: 'collection-add-to-cart sf__btn-primary w-full mt-4', product: product %}
+          </div>
+          <input type="hidden" name="product-id" value="{{ product.id }}">
+          <input type="hidden" name="section-id" value="{{ section.id }}">
+        {%- endform -%}
+      </collection-product-form>
+    {% else %}
+      {% if settings.select_option_button_action == 'popup' %}
+        <input hidden name="id" required value="{{ variant_id }}" data-selected-variant="{{ selected_variant_id }}">
+        <button class="f-product-form sf-pqv__button sf__btn sf__btn-secondary sf__btn-white flex-grow" data-product-url="{{ product.url }}" data-product-id="{{ product.id }}" data-product-handle="{{ product.handle }}">
+          <span>{{ quick_add_text }}</span>
+        </button>
+      {% else %}
+        <input hidden name="id" required value="{{ variant_id }}" data-selected-variant="{{ selected_variant_id }}">
+        <a class="f-product-form sf__btn sf__btn-secondary sf__btn-white flex-grow" href="{{ product.url }}" data-product-id="{{ product.id }}">
+          <span>{{ quick_add_text }}</span>
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+{%- endif -%}

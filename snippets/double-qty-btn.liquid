@@ -1,0 +1,34 @@
+{% comment %}Double quantity button snippet{% endcomment %}
+
+{% comment %}
+  Button to add the minimum quantity defined for the product or line item.
+{% endcomment %}
+{% assign min_qty = 1 %}
+{% assign inventory_qty = 0 %}
+{% if product %}
+  {% assign min_qty = product.metafields.custom.minimum_quantity | default: 1 %}
+  {% assign inventory_qty = product.selected_or_first_available_variant.inventory_quantity | default: 0 %}
+{% elsif item %}
+  {% assign min_qty = item.product.metafields.custom.minimum_quantity | default: 1 %}
+  {% assign inventory_qty = item.variant.inventory_quantity | default: 0 %}
+{% endif %}
+{% assign label_template = block.settings.double_qty_btn_label | default: 'Add another {min_qty}' %}
+{% if label_template contains '{min_qty}' %}
+  {% assign btn_label = label_template | replace: '{min_qty}', min_qty %}
+{% else %}
+  {% assign btn_label = label_template %}
+{% endif %}
+{% if min_qty > 0 and inventory_qty > 0 or request.design_mode %}
+<button type="button"
+        class="double-qty-btn sf__btn sf__btn-secondary"
+        aria-label="{{ btn_label }}"
+        data-double-qty
+        data-label-template="{{ label_template }}"
+        data-product-id="{{ product.id | default: item.product_id }}">
+    {{ btn_label }}
+</button>
+{% endif %}
+
+
+
+

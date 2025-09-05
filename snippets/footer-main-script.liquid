@@ -1,0 +1,24 @@
+{% comment %}
+ nu modifica acest cod
+{% endcomment %}
+{% if request.design_mode  %}
+    {% unless settings.th_key == "BR843 CPX421 IG3JJ 10ZVZ 4XC31 VTM45 KKD332" %}
+      <style>
+        .license-key{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            z-index: 9999;
+        }
+      </style>
+      <div class="license-key">
+        <img src="https://cdn.shopify.com/s/files/1/0677/3715/7909/files/Add_a_subheading.png?v=1668432267" loading="lazy">
+      </div>
+    {% endunless  %}
+  {% endif %}

@@ -1,0 +1,93 @@
+/* Stiluri izolate pentru componenta de quick add din colecție */
+/* collection-quick-add.css - Autor: Saga Media / Egross */
+
+/* Previne highlight-ul pe cardurile de produs */
+.sf__pcard, .sf__pcard *,
+.product-card, .product-card * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Permite selectarea doar în inputuri și textarea */
+.sf__pcard input,
+.sf__pcard textarea,
+.product-card input,
+.product-card textarea {
+  -webkit-user-select: auto !important;
+  -moz-user-select: auto !important;
+  -ms-user-select: auto !important;
+  user-select: auto !important;
+}
+
+.sf__pcard-quick-add-col {
+  width: 100%;
+}
+
+input.collection-qty-element,
+input.collection-qty-element:focus {
+  box-sizing: border-box;
+  color: inherit;
+  font-family: inherit;
+  font-size: 100%;
+  margin: 0;
+  flex-shrink: 1;
+  flex-grow: 1;
+  appearance: none;
+  text-align: center;
+  border: 0 !important;
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255/var(--tw-bg-opacity));
+  border-radius: 0.25rem;
+  line-height: 1.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+/* layout tweaks for quantity controls inside quick-add cards */
+.collection-qty-group {
+  flex-wrap: wrap;
+}
+
+.collection-qty-group .collection-quantity-input {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+.collection-qty-group .collection-double-qty-btn {
+  flex: 2 2 auto;
+  width: auto;
+  max-width: none;
+}
+
+.collection-qty-group > .collection-quantity-input:only-child,
+.collection-qty-group > .collection-double-qty-btn:only-child {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.collection-qty-group.is-wrapped .collection-quantity-input {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.collection-qty-group.is-wrapped .collection-double-qty-btn {
+  flex: 1 1 100%;
+  width: 100%;
+  height: 46px;
+}
+
+/* fallback discret pentru low-stock în slidere */
+[data-section-type] input.collection-qty-element.is-low-stock {
+  color: #e3342f !important;
+  font-weight: 600;
+}
+
+/* compact Add to cart layout when quantity controls stay on one line */
+.collection-form__actions.add-to-cart--compact .collection-add-to-cart {
+  display: block;
+  width: auto;
+  margin-left: auto;
+  flex-grow: 0;
+}
+

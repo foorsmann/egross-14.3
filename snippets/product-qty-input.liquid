@@ -1,0 +1,66 @@
+{% comment %}Quantity selector and optional "Add minimum quantity" button{% endcomment %}
+<div class="flex gap-2 w-full">
+  {%- assign qty_input_id = product_form_id | append: '-qty' -%}
+  <quantity-input class="quantity-input h-[46px] flex border border-color-border rounded flex-1 {{ class }}" data-product-id="{{ product.id }}">
+    <button
+        class="quantity-input__button flex items-center justify-center h-[46px] w-[46px]"
+        type="button"
+        aria-label="{{ 'products.product.decrease_quantity' | t: title: product.title }}"
+        data-quantity-selector="decrease"
+        data-product-id="{{ product.id }}"
+        name="minus"
+    >
+        <svg class="w-[12px] h-[12px]" fill="currentColor" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M376 232H8c-4.42 0-8 3.58-8 8v32c0 4.42 3.58 8 8 8h368c4.42 0 8-3.58 8-8v-32c0-4.42-3.58-8-8-8z"/></svg>
+    </button>
+    <input
+        class="quantity-input__element w-10 text-center flex-grow shrink appearance-none"
+        type="number"
+        name="quantity"
+        id="{{ qty_input_id }}"
+        value="{{ product.metafields.custom.minimum_quantity | default: 1 }}"
+        min="{{ product.metafields.custom.minimum_quantity | default: 1 }}"
+        max="{{ product.selected_or_first_available_variant.inventory_quantity }}"
+        step="{{ product.metafields.custom.minimum_quantity | default: 1 }}"
+        aria-label="{{ 'products.product.product_quantity' | t }}"
+        data-quantity-input
+        data-min-qty="{{ product.metafields.custom.minimum_quantity | default: 1 }}"
+        data-product-id="{{ product.id }}"
+        form="{{ product_form_id }}"
+    >
+    <button
+        class="quantity-input__button flex items-center justify-center h-[46px] w-[46px]"
+        type="button"
+        aria-label="{{ 'products.product.increase_quantity' | t: title: product.title }}"
+        data-quantity-selector="increase"
+        data-product-id="{{ product.id }}"
+        name="plus"
+    >
+        <svg class="w-[12px] h-[12px]" fill="currentColor" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M376 232H216V72c0-4.42-3.58-8-8-8h-32c-4.42 0-8 3.58-8 8v160H8c-4.42 0-8 3.58-8 8v32c0 4.42 3.58 8 8 8h160v160c0 4.42 3.58 8 8 8h32c4.42 0 8-3.58 8-8V280h160c4.42 0 8-3.58 8-8v-32c0-4.42-3.58-8-8-8z"/></svg>
+    </button>
+  </quantity-input>
+
+  {%- if show_double_qty_btn -%}
+    {%- assign min_qty = product.metafields.custom.minimum_quantity | default: 1 -%}
+    {%- assign inventory_qty = product.selected_or_first_available_variant.inventory_quantity | default: 0 -%}
+    {%- assign label_template = block.settings.double_qty_btn_label | default: 'Add another {min_qty}' -%}
+    {%- if label_template contains '{min_qty}' -%}
+      {%- assign btn_label = label_template | replace: '{min_qty}', min_qty -%}
+    {%- else -%}
+      {%- assign btn_label = label_template -%}
+    {%- endif -%}
+    {%- if min_qty > 0 and inventory_qty > 0 or request.design_mode -%}
+      <button
+        type="button"
+        class="double-qty-btn sf__btn sf__btn-secondary flex-1 max-w-[160px]"
+        aria-label="{{ btn_label }}"
+        data-double-qty
+        data-label-template="{{ label_template }}"
+        data-product-id="{{ product.id }}"
+      >
+        {{ btn_label }}
+      </button>
+    {%- endif -%}
+  {%- endif -%}
+</div>
+
+
